@@ -1,4 +1,4 @@
-grammar test;
+grammar g;
 
 program :        ft_dcl? ft_def+ ;
 ft_dcl :         'declare' '{' ( func_dcl | type_dcl | var_def )+ '}' ;
@@ -12,7 +12,7 @@ var_def :        ('const')?  type var_val ( ',' var_val )* ';';
 var_val :        ref ( '=' expr)? ;
 ft_def :         type_def | fun_def;
 type_def :       'type' ID (':'ID )? '{' component+ '}';
-component :      (access_modifier)? ( var_def | fun_def );
+component :      (access_modifier)? ( fun_def |var_def  );
 access_modifier: 'public' | 'private' | 'protected';
 fun_def :        ( '(' args_var ')' '=' )? 'function ' ID'(' (args_var)? ')' block;
 block :          '{' ( var_def | stmt )* '}';
@@ -21,19 +21,22 @@ stmt :           assign ';' |
                  cond_stmt |
                  loop_stmt |
                  'break' ';' | 'continue' ';' | 'destruct' ( '[' ']' )* ID ';';
-assign :         ( var | '(' var ( ',' var )*  ')' ) '=' expr ;
-var :            ( ( 'this' | 'super' ) ';' )? ref ( '.' ref )*;
+assign :         (<assoc=right>( var | '(' var ( ',' var )*  ')' ) '=' expr );
+var :            ( ( 'this' | 'super' ) '.' )? ref ( '.' ref )*;
 ref :            ID ( '(' expr ')' )* ;
-expr :           expr binary_op expr |
-                 '(' expr ')' |
-                 unary_op expr|
+expr :           '(' expr ')' |
+                 MINUS expr|
+                 UNARY_OP expr|
+                 expr binary_op expr |
+                 expr MINUS expr|
+
                  const_val|
                  'allocate' handle_call |
                  func_call |
                  var |
                  list| 'nil';
 func_call :      ( var '.' )? handle_call |
-                 'read' '(' ')' | 'write' '(' <expr> ')';
+                 'read' '(' ')' | 'write' '(' expr ')';
 list :           '[' ( expr | list) ( ';' ( expr | list ) )*']';
 handle_call :    ID '(' params? ')';
 params :         expr | expr ',' params ;
@@ -44,12 +47,7 @@ loop_stmt :      'for' ( (type)? assign )? ';' expr ';' (assign)? block |
                  'while' expr block;
 type :            TYPE| ID ;
 const_val :      INT_CONST | REAL_CONST | BOOL_CONST | STRING_CONST;
-//unary_op :       '-' | '!' | '~';
-binary_op :      arithmetic | relational | bitwise | logical ;
-arithmetic :     '+' | '-' | '*' | '/' | '%' ;
-bitwise :        '&' | '|' ;
-logical :        '||' | '&&' ;
-relational :     '==' | '!=' | '<=' | '>=' | '<' | '>' ;
+binary_op :      ARITH1 | ARITH2 | RELATIONAL | BITWISE_AND | LOGICAL_AND |BITWISE_OR | LOGICAL_OR;
 
 //tokens
 
@@ -57,9 +55,17 @@ ID :             LETTER (LETTER | DIGIT)*;
 INT_CONST:       '0'[xX]HEX|DIGIT+;
 REAL_CONST:       REAL_D | REAL_H;
 BOOL_CONST:      'true' | 'false';
-STRING_CONST:    'string_const';
-TYPE:            'int' | 'bool' | 'float' | 'string';
-UNARY_OP:        '-' | '!' | '~';
+STRING_CONST:    '\''([a-zA-Z0-9]) | '\\n' |'\\r' | '\\t' | '\\\\' | '\\\'' |'\\0'| ('x' | 'X')([a-fA-F] | DIGIT)([a-fA-F] | DIGIT);
+TYPE:           'float'|'int' | 'bool'  | 'string';
+ARITH1 :          '*' | '/' | '%' ;
+ARITH2:           '+';
+RELATIONAL :     '>'|'>='|'<'|'<='|'=='|'!=' ;
+UNARY_OP:        '!' | '~';
+MINUS:           '-';
+BITWISE_AND:    '&' ;
+BITWISE_OR:     '|';
+LOGICAL_AND:     '&&';
+LOGICAL_OR:     '||';
 
 
 
@@ -77,6 +83,6 @@ fragment REAL_HEX_EXP:              ([eE]([+-])? HEX+);
 
 
 
-WHITESPACE:        [ \n\t\r] -> skip;
-Line_CMT:          '#$' .*? ('\n') -> skip;
-CMT:               '%(' .*? ')%' -> skip;
+WHITESPACE:        [ \n\t\r]+ -> skip;
+Line_CMT:          '#$' .*? ('\r')? '\n'  -> skip;
+CMT:               '#(' .*? ')#' -> skip;
