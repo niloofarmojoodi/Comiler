@@ -23,13 +23,16 @@ stmt :           assign ';' |
                  'break' ';' | 'continue' ';' | 'destruct' ( '[' ']' )* ID ';';
 assign :         (<assoc=right>( var | '(' var ( ',' var )*  ')' ) '=' expr );
 var :            ( ( 'this' | 'super' ) '.' )? ref ( '.' ref )*;
-ref :            ID ( '(' expr ')' )* ;
+ref :            ID ( '[' expr ']' )* ;
 expr :           '(' expr ')' |
                  MINUS expr|
-                 UNARY_OP expr|
-                 expr binary_op expr |
+                 expr ('*' | '/' | '%' ) expr |
+                 expr ('+' )expr|
                  expr MINUS expr|
-
+                 expr ('>'|'>='|'<'|'<='|'=='|'!=') expr|
+                 expr ('&'|'&&') expr |
+                 expr ('|'|'||') expr |
+                 UNARY_OP expr|
                  const_val|
                  'allocate' handle_call |
                  func_call |
@@ -42,12 +45,12 @@ handle_call :    ID '(' params? ')';
 params :         expr | expr ',' params ;
 cond_stmt :      'if' expr ( block | stmt ) ( 'else' ( block | stmt ) )?|
                  'switch' var '{' switch_body '}';
-switch_body :    ( 'caseof int_const' ';' block )+( 'default' ';' block )?;
+switch_body :    ( 'caseof' INT_CONST ':' block )+( 'default' ':' block )?;
 loop_stmt :      'for' ( (type)? assign )? ';' expr ';' (assign)? block |
                  'while' expr block;
 type :            TYPE| ID ;
 const_val :      INT_CONST | REAL_CONST | BOOL_CONST | STRING_CONST;
-binary_op :      ARITH1 | ARITH2 | RELATIONAL | BITWISE_AND | LOGICAL_AND |BITWISE_OR | LOGICAL_OR;
+
 
 //tokens
 
@@ -55,17 +58,11 @@ ID :             LETTER (LETTER | DIGIT)*;
 INT_CONST:       '0'[xX]HEX|DIGIT+;
 REAL_CONST:       REAL_D | REAL_H;
 BOOL_CONST:      'true' | 'false';
-STRING_CONST:    '\''([a-zA-Z0-9]) | '\\n' |'\\r' | '\\t' | '\\\\' | '\\\'' |'\\0'| ('x' | 'X')([a-fA-F] | DIGIT)([a-fA-F] | DIGIT);
+STRING_CONST:    '\''( SCAPE| ~["\\] | ~[\\])*? '\'' ;
 TYPE:           'float'|'int' | 'bool'  | 'string';
-ARITH1 :          '*' | '/' | '%' ;
-ARITH2:           '+';
-RELATIONAL :     '>'|'>='|'<'|'<='|'=='|'!=' ;
 UNARY_OP:        '!' | '~';
 MINUS:           '-';
-BITWISE_AND:    '&' ;
-BITWISE_OR:     '|';
-LOGICAL_AND:     '&&';
-LOGICAL_OR:     '||';
+
 
 
 
@@ -80,6 +77,7 @@ fragment REAL_H:                    '0'[xX] (REAL_HEX_LEFT | REAL_HEX_RIGHT | RE
 fragment REAL_HEX_LEFT:             (HEX)+'.'(HEX+)?;
 fragment REAL_HEX_RIGHT:            (HEX+)?'.'(HEX+);
 fragment REAL_HEX_EXP:              ([eE]([+-])? HEX+);
+fragment SCAPE :  '\\n' |'\\r' | '\\t' | '\\\\' | '\\\''  |'\\0'|'\\'[xX]HEX HEX;
 
 
 
