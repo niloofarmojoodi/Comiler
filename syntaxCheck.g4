@@ -83,5 +83,5 @@ fragment SCAPE :  '\\n' |'\\r' | '\\t' | '\\\\' | '\\\''  |'\\0'|'\\'[xX]HEX HEX
 
 
 WHITESPACE:        [ \n\t\r]+ -> skip;
-Line_CMT:          '#$' .*? ('\r')? '\n'  -> skip;
+Line_CMT:          '#' .*? ('\r')? '\n'  -> skip;
 CMT:               '#(' .*? ')#' -> skip;
