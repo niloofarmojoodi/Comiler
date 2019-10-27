@@ -26,27 +26,27 @@ var :            ( ( 'this' | 'super' ) '.' )? ref ( '.' ref )*;
 ref :            ID ( '[' expr ']' )* ;
 expr :           '(' expr ')' |
                  MINUS expr|
+                 UNARY_OP expr|
                  expr ('*' | '/' | '%' ) expr |
                  expr ('+' )expr|
                  expr MINUS expr|
-                 expr ('>'|'>='|'<'|'<='|'=='|'!=') expr|
                  expr ('||'|'&&') expr |
                  expr ('|'|'&') expr |
-                 UNARY_OP expr|
+                 expr ('>'|'>='|'<'|'<='|'=='|'!=') expr|
                  const_val|
                  'allocate' handle_call |
                  func_call |
                  var |
                  list| 'nil';
 func_call :      ( var '.' )? handle_call |
-                 'read' '(' ')' | 'write' '(' expr ')';
+                 'read' '(' expr')' | 'write' '(' expr ')';
 list :           '[' ( expr | list) ( ',' ( expr | list ) )*']';
 handle_call :    ID '(' params? ')';
-params :         expr | expr ',' params ;
+params :         expr | (expr ',' params) ;
 cond_stmt :      'if' expr ( block | stmt ) ( 'else' ( block | stmt ) )?|
                  'switch' var '{' switch_body '}';
 switch_body :    ( 'caseof' INT_CONST ':' block )+( 'default' ':' block )?;
-loop_stmt :      'for' ( (type)? assign ) ';' expr ';' assign? block |
+loop_stmt :      'for' ( (type)? assign )? ';' expr ';' assign? block |
                  'while' expr block;
 type :            TYPE| ID ;
 const_val :      INT_CONST | REAL_CONST | BOOL_CONST | STRING_CONST;
@@ -55,7 +55,7 @@ const_val :      INT_CONST | REAL_CONST | BOOL_CONST | STRING_CONST;
 //tokens
 
 ID :             LETTER (LETTER | DIGIT)*;
-INT_CONST:       '0'[xX]HEX|DIGIT+;
+INT_CONST:       '0'[xX]HEX+|DIGIT+;
 REAL_CONST:       REAL_D | REAL_H;
 BOOL_CONST:      'true' | 'false';
 STRING_CONST:    '\''( SCAPE| ~["\\] | ~[\\])*? '\'' ;
@@ -67,20 +67,21 @@ MINUS:           '-';
 
 
 fragment LETTER :                   [a-zA-Z_@];
-fragment DIGIT :                    [0-9]+;
-fragment HEX:                       [a-fA-F0-9]+;
-fragment REAL_D:                    REAL_DECIMAL_LEFT | REAL_DECIMAL_RIGHT ( REAL_DECIMAL_EXP)?;
+fragment DIGIT :                    [0-9];
+fragment HEX:                       [a-fA-F0-9];
+fragment REAL_D:                    REAL_DECIMAL_LEFT | REAL_DECIMAL_RIGHT REAL_DECIMAL_EXP?;
 fragment REAL_DECIMAL_LEFT:         (DIGIT+)'.'(DIGIT+)?;
 fragment REAL_DECIMAL_RIGHT:        (DIGIT+)?'.'(DIGIT+);
 fragment REAL_DECIMAL_EXP:          ([eE]([+-])? DIGIT+);
-fragment REAL_H:                    '0'[xX] (REAL_HEX_LEFT | REAL_HEX_RIGHT | REAL_HEX_EXP?);
+fragment REAL_H:                    '0'[xX] (REAL_HEX_LEFT | REAL_HEX_RIGHT  REAL_HEX_EXP?) ;
 fragment REAL_HEX_LEFT:             (HEX)+'.'(HEX+)?;
 fragment REAL_HEX_RIGHT:            (HEX+)?'.'(HEX+);
 fragment REAL_HEX_EXP:              ([eE]([+-])? HEX+);
-fragment SCAPE :  '\\n' |'\\r' | '\\t' | '\\\\' | '\\\''  |'\\0'|'\\'[xX]HEX HEX;
+fragment SCAPE :                    '\\n' |'\\r' | '\\t' | '\\\\' | '\\\''  |'\\0'|'\\'[xX]HEX HEX;
 
 
 
-WHITESPACE:        [ \t\r\n]+ -> skip;
-SINGLE_LINE_COMMENT: '#$' ~[\r\n]* -> skip;
-CMT:               '#(' .*? ')#' -> skip;
+WHITESPACE:           [ \t\r\n]+ ->    skip;
+SINGLE_LINE_COMMENT:  '#$' ~[\r\n]* -> skip
+ ;
+CMT:                 '#(' .*? ')#' ->  skip;
