@@ -1,0 +1,86 @@
+grammar g;
+
+program :        ft_dcl? ft_def* ;
+ft_dcl :         'declare' '{' ( func_dcl | type_dcl | var_def )+ '}' ;
+func_dcl :       ( '(' args ')' '=' )? ID '(' (args|args_var)? ')' ';' ;
+args :           type( '[' ']' )* |
+                 args ',' type ( '[' ']' )*;
+args_var :       type ( '[' ']' )* ID |
+                 args_var ',' type ( '[' ']' )* ID;
+type_dcl :       ID ';';
+var_def :        ('const')?  type var_val ( ',' var_val )* ';';
+var_val :        ref ( '=' expr)? ;
+ft_def :         type_def | fun_def;
+type_def :       'type' ID (':'ID )? '{' component+ '}';
+component :      access_modifier? ( fun_def |var_def  );
+access_modifier: 'public' | 'private' | 'protected';
+fun_def :        ( '(' args_var ')' '=' )? 'function' ID'(' args_var? ')' block;
+block :          '{' ( var_def | stmt )* '}';
+stmt :           assign ';' |
+                 func_call ';' |
+                 cond_stmt |
+                 loop_stmt |
+                 'break' ';' | 'continue' ';' | 'destruct' ( '[' ']' )* ID ';';
+assign :         (<assoc=right>( var | '(' var ( ',' var )*  ')' ) '=' expr );
+var :            ( ( 'this' | 'super' ) '.' )? ref ( '.' ref )*;
+ref :            ID ( '[' expr ']' )* ;
+expr :           '(' expr ')' |
+                 MINUS expr|
+                 UNARY_OP expr|
+                 expr ('*' | '/' | '%' ) expr |
+                 expr ('+' )expr|
+                 expr MINUS expr|
+                 expr ('||'|'&&') expr |
+                 expr ('|'|'&') expr |
+                 expr ('>'|'>='|'<'|'<='|'=='|'!=') expr|
+                 const_val|
+                 'allocate' handle_call |
+                 func_call |
+                 var |
+                 list| 'nil';
+func_call :      ( var '.' )? handle_call |
+                 'read' '('')' | 'write' '(' expr ')';
+list :           '[' ( expr | list) ( ',' ( expr | list ) )*']';
+handle_call :    ID '(' params? ')';
+params :         expr | (expr ',' params) ;
+cond_stmt :      'if' expr ( block | stmt ) ( 'else' ( block | stmt ) )?|
+                 'switch' var '{' switch_body '}';
+switch_body :    ( 'caseof' INT_CONST ':' block )+( 'default' ':' block )?;
+loop_stmt :      'for' ( (type)? assign )? ';' expr ';' assign? block |
+                 'while' expr block;
+type :            TYPE| ID ;
+const_val :      INT_CONST | REAL_CONST | BOOL_CONST | STRING_CONST;
+
+
+//tokens
+
+ID :             LETTER (LETTER | DIGIT)*;
+INT_CONST:       '0'[xX]HEX+|DIGIT+;
+REAL_CONST:      REAL_D | REAL_H ;
+BOOL_CONST:      'true' | 'false';
+STRING_CONST:    '\''( SCAPE| ~["\\] | ~[\\])*? '\'' ;
+TYPE:           'float'|'int' | 'bool'  | 'string';
+UNARY_OP:        '!' | '~';
+MINUS:           '-';
+
+
+
+
+fragment LETTER :                   [a-zA-Z_@];
+fragment DIGIT :                    [0-9];
+fragment HEX:                       [a-fA-F0-9];
+fragment SCAPE :                    '\\n' |'\\r' | '\\t' | '\\\\' | '\\\''  |'\\0'|'\\'[xX]HEX HEX;
+fragment REAL_D:                    (REAL_D_L | REAL_D_R ) REAL_D_Ex?;
+fragment REAL_H:                    '0'[Xx] (REAL_H_L | REAL_H_R) REAL_H_Ex?;
+fragment REAL_D_L:                  (DIGIT+) '.' (DIGIT+)?;
+fragment REAL_D_R:                  (DIGIT+)? '.' (DIGIT+);
+fragment REAL_H_L:                  (HEX+) '.' (HEX+)?;
+fragment REAL_H_R:                  (HEX+)? '.' (HEX+);
+fragment REAL_D_Ex:                 ('^'([+-])? DIGIT+) ;
+fragment REAL_H_Ex:                 ('^'([+-])? HEX+);
+
+
+
+WHITESPACE:           [ \t\r\n]+ ->    skip;
+SINGLE_LINE_COMMENT:  '#$' ~[\r\n]* -> skip;
+CMT:                 '#(' .*? ')#' ->  skip;
