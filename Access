@@ -1,0 +1,5 @@
+package LULU;
+public enum Access
+{
+    PRIVATE , PUBLIC , PROTECTED;
+}
