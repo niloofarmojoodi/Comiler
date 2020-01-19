@@ -1,0 +1,50 @@
+package LULU;
+import LULU.Type;
+import LULU.Access;
+public class Symbol_Table_little {
+
+    private Type tp;
+    private Object value;
+    private int width;
+    private Access acces;
+    private boolean constant = false;
+
+
+    public Symbol_Table_little (Type type,Object value)
+    {
+        this.tp = type;
+        this.value = value;
+        
+
+
+    }
+
+
+    public void setConstant(boolean constant) {
+        this.constant = constant;
+    }
+
+    public void setAcces(Access acces) {
+        this.acces = acces;
+    }
+
+    public void setWidth()
+     {
+        if(this.tp.toString() == "int"){
+            this.width = 4;
+        }
+        if(this.tp.toString() == "bool"){
+            this.width =1;
+        }
+        if(this.tp.toString() == "string" ){
+            int l = this.value.toString().length();
+            this.width = 2*l + 2;
+        }
+        //Array checking
+
+    }
+
+
+
+
+}
