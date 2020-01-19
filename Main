@@ -1,0 +1,37 @@
+package LULU;
+
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.IOException;
+
+public class Main
+{
+    public static void main(String[] args) throws IOException
+    {
+
+        File file = new File("C:\\Users\\Mohammad Hossein\\IdeaProjects\\compiler_pro\\src\\LULU\\sampleLuLuInput.txt");
+        FileInputStream fis = new FileInputStream(file);
+        ANTLRInputStream input = new ANTLRInputStream(fis);
+        luluLexer lexer = new luluLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        luluParser parser = new luluParser(tokens);
+        ParseTree tree = parser.program();
+        ParseTreeWalker walker = new ParseTreeWalker();
+        luluBaseListener luluListener = new luluBaseListener(parser);
+        walker.walk(luluListener,tree);
+        //System.out.print(parser);
+        //luluListener.enterProgram(parser.program());
+        //luluListener.enterConstvalExpr();
+        //luluListener.enterType_def(parser.type_def());
+        //luluListener.enterFun_def(parser.fun_def());
+        fis.close();
+
+
+    }
+}
