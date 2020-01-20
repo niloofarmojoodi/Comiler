@@ -1,50 +1,170 @@
 package LULU;
 import LULU.Type;
 import LULU.Access;
-public class Symbol_Table_little {
+
+import java.util.ArrayList;
+
+public class Symbol_Table_id {
 
     private Type tp;
     private Object value;
     private int width;
     private Access acces;
-    private boolean constant = false;
+    private boolean isconstant ;
+    private int dimentional ;
+    private  ArrayList<Integer> Array_width;
+    private boolean is_Array;
+    private boolean is_function;
+    private ArrayList<Object> return_value;
+    private ArrayList<Object> Argument_value;
+    private  boolean is_user_Type;
 
 
-    public Symbol_Table_little (Type type,Object value)
+    public Symbol_Table_id (Type type,Object value )
     {
         this.tp = type;
         this.value = value;
-        
-
-
+        this.acces = Access.PRIVATE;
+        this.isconstant = false;
+        this.is_Array = false;
+        this.dimentional = 0;
+        this.is_function = false;
+        this.return_value = null;
+        this.Argument_value = null;
+        this.is_user_Type = false;
+        this.Array_width = null;
     }
 
-
-    public void setConstant(boolean constant) {
-        this.constant = constant;
+    public void setValue(Object value) {
+        this.value = value;
     }
 
     public void setAcces(Access acces) {
         this.acces = acces;
     }
+     public void setIs_Array(boolean is_array){
+        this.is_Array = is_array;
+    }
+    public void setIsconstant(boolean isconstant) {
+        this.isconstant = isconstant;
+    }
 
-    public void setWidth()
+    public void setIs_function(boolean is_function) {
+        this.is_function = is_function;
+    }
+
+    public void setDimentional(int dimentional) {
+        this.dimentional = dimentional;
+    }
+
+    public void setReturn_value(ArrayList<Object> return_value) {
+        this.return_value = return_value;
+    }
+
+    public void setArgument_value(ArrayList<Object> argument_value) {
+        Argument_value = argument_value;
+    }
+
+    public void setArray_width(ArrayList<Integer> array_width) {
+        this.Array_width = array_width;
+        for (int i=0;i<this.dimentional;i++){
+            this.Array_width.add(0);
+        }
+    }
+
+    public void setWidth(Type tp)
      {
-        if(this.tp.toString() == "int"){
+        if(tp.toString().equals("int")){
             this.width = 4;
         }
-        if(this.tp.toString() == "bool"){
+        if(tp.toString().equals("bool")){
             this.width =1;
         }
-        if(this.tp.toString() == "string" ){
+        if(tp.toString().equals("string") ){
             int l = this.value.toString().length();
             this.width = 2*l + 2;
         }
-        //Array checking
+         //Array checking
+        if(is_Array){
+            if(tp.toString().equals("int")){
+                int multi=1;
+
+                for (int i=0;i<this.dimentional;i++){
+
+                        multi *= this.Array_width.get(i) ;
+                }
+                this.width = 4 * multi;
+
+            }
+            if(tp.toString().equals("float")){
+                int multi=1;
+
+                for (int i=0;i<this.dimentional;i++){
+
+                    multi *= this.Array_width.get(i) ;
+                }
+                this.width = 8 * multi;
+            }
+            if(tp.toString().equals("bool")){
+                int multi=1;
+
+                for (int i=0;i<this.dimentional;i++){
+
+                    multi *= this.Array_width.get(i) ;
+                }
+                this.width = multi;
+            }
+
+        }
+
 
     }
 
+    public int getWidth() {
+        return width;
+    }
+
+    public Access getAcces() {
+        return acces;
+    }
+
+    public boolean getIs_Array(){
+        return is_Array;
+    }
+    public Object getValue() {
+        return value;
+    }
+
+    public Type getTp() {
+        return tp;
+    }
+
+    public int getDimentional() {
+        return dimentional;
+    }
+
+    public ArrayList getArgument_value() {
+        return Argument_value;
+    }
+
+    public ArrayList<Integer> getArray_width() {
+        return Array_width;
+    }
+
+    public ArrayList getReturn_value() {
+        return return_value;
+    }
+
+    public boolean getIsconstant(){
+        return isconstant;
+    }
 
 
+    public boolean getIs_user_Type(){
+        return is_user_Type;
+    }
 
+    public boolean getIs_function(){
+        return is_function;
+    }
 }
