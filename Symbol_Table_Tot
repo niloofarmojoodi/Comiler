@@ -1,0 +1,31 @@
+package LULU;
+import LULU.Symbol_Table_id;
+import java.util.HashMap;
+import LULU.Errors;
+public class SymbolTableTot {
+    HashMap<String , Symbol_Table_id> map;
+
+    public SymbolTableTot( ){
+        map = new HashMap<String, Symbol_Table_id>();
+    }
+    public boolean update_Id (String Name ,Object value){
+        Symbol_Table_id table = find_name(Name);
+        if(table != null){
+            table.setValue(value);
+            map.put(Name , table);
+            return true;
+        }
+        return  false;
+    }
+    public void Insert_Id (String Name , Type type , Object value){
+        Symbol_Table_id table = find_name(Name);
+        if(table == null) {
+            table = new Symbol_Table_id(type, value);
+            map.put(Name, table);
+        }
+    }
+    public Symbol_Table_id find_name(String name){
+        return map.getOrDefault(name , null);
+    }
+
+}
