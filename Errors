@@ -1,0 +1,15 @@
+package LULU;
+import java.util.HashMap;
+import java.util.Map;
+
+public class Errors {
+    private Map<Integer ,String> error;
+    public Errors(int line ,String errorTxt){
+        error = new HashMap<Integer ,String>();
+        error.put(line ,errorTxt);
+    }
+
+    public Map<Integer, String> getError() {
+        return error;
+    }
+}
