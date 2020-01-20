@@ -1,0 +1,31 @@
+package LULU;
+import java.util.ArrayList;
+import LULU.SymbolTableTot;
+
+public class Scope {
+
+    private String Name;
+    private Scope Parent;
+    private ArrayList<Scope> Children;
+    private SymbolTableTot Table;
+    private int width;
+
+    public Scope(String name)
+    {
+        Children = new ArrayList<>();
+        Table = new SymbolTableTot();
+        this.Name = name;
+    }
+
+    public Scope insert_child(String name){
+        Scope child = new Scope(name);
+        child.Parent = this;
+        Children.add(child);
+        return child;
+    }
+    public void setWidth(SymbolTableTot table) {
+        int w = 0;
+
+
+    }
+}
