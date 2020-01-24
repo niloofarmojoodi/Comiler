@@ -1,11 +1,11 @@
-public boolean isInt(String str) {
+ public boolean isInt(String str) {
+     String regex = "[0-9]+";
      String s = symbolTableTree.getCurrentScope().getDataTable().find_id_by_name(str);
-
      if (str.contains("'") || str.equals("true") || str.equals("false")) {
       return false;
      }
-     if ((!s.equals("not found")) && s.equals("int")) {
+     if ((!s.equals("not found")) && s.equals("int") || str.matches(regex)) {
       return true;
      }
-     else return false;
+      return false;
     }
