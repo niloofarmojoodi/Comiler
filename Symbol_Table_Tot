@@ -1,31 +1,93 @@
 package LULU;
-import LULU.Symbol_Table_id;
-import java.util.HashMap;
-import LULU.Errors;
-public class SymbolTableTot {
-    HashMap<String , Symbol_Table_id> map;
+import LULU.*;
 
-    public SymbolTableTot( ){
-        map = new HashMap<String, Symbol_Table_id>();
-    }
-    public boolean update_Id (String Name ,Object value){
-        Symbol_Table_id table = find_name(Name);
-        if(table != null){
-            table.setValue(value);
-            map.put(Name , table);
-            return true;
+import java.util.ArrayList;
+
+public class Symbol_tot {
+
+    private ArrayList<Symbol_id> s_id;
+    private ArrayList<Symbol_class> s_class;
+    private ArrayList<Symbol_function> s_func;
+
+    public Symbol_id find_id_by_name(String name){
+        for (int i=0;i<s_id.size();i++){
+            if(s_id.get(i).getName().equals(name)){
+                return s_id.get(i);
+            }
         }
-        return  false;
+        return null;
     }
-    public void Insert_Id (String Name , Type type , Object value){
-        Symbol_Table_id table = find_name(Name);
-        if(table == null) {
-            table = new Symbol_Table_id(type, value);
-            map.put(Name, table);
+
+    public ArrayList<Symbol_class> getS_class() {
+        return s_class;
+    }
+
+    public ArrayList<Symbol_function> getS_func() {
+        return s_func;
+    }
+
+    public ArrayList<Symbol_id> getS_id() {
+        return s_id;
+    }
+
+    public Symbol_tot(){
+        s_id = new ArrayList<>();
+        s_class = new ArrayList<>();
+        s_func = new ArrayList<>();
+    }
+     // -------------------------------------constructor for arrays------------------------------------------------------
+    public void addId(String name , String type ,Object value,Access access, boolean isConst , boolean isArray , int d , ArrayList<Integer> arr_width ){
+        Symbol_id id = new Symbol_id();
+        id.setName(name);
+        id.setType(type);
+        id.setIs_Array(isArray);
+        id.setIsconstant(isConst);
+        id.setArray_width(arr_width);
+        id.setDimentional(d);
+        id.setValue(value);
+        id.setAccess(access);
+        s_id.add(id);
+    }
+    public void addId(String name , String type , boolean isConst , Object value){
+        Symbol_id id = new Symbol_id();
+        id.setName(name);
+        id.setType(type);
+        id.setValue(value);
+        id.setIsconstant(isConst);
+        id.calculate_width(type);
+        s_id.add(id);
+    }
+
+    public void addFunc(String name){
+        Symbol_function func = new Symbol_function();
+        func.setName(name);
+        s_func.add(func);
+    }
+    public void add_arg_to_function(String name , ArrayList<String> return_type , ArrayList<String> argument_type){
+        Symbol_function target_function = find_symbol_function_by_name(name);
+        target_function.setArgument_type(argument_type);
+        target_function.setReturn_type(return_type);
+    }
+
+    public void addClass(String name , Symbol_class parent){
+        Symbol_class clas = new Symbol_class();
+        clas.setName(name);
+        clas.setParentClass(parent);
+        s_class.add(clas);
+
+    }
+
+    public Symbol_function find_symbol_function_by_name(String name){
+        for(int i=0;i<this.s_func.size();i++){
+            if(this.s_func.get(i).getName() == name){
+                return s_func.get(i);
+            }
         }
+        return null;
     }
-    public Symbol_Table_id find_name(String name){
-        return map.getOrDefault(name , null);
-    }
+
 
 }
+
+
+
