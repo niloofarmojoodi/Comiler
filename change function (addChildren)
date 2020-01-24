@@ -1,0 +1,7 @@
+ public Scope addChildren(String name)
+    {
+        Scope child = new Scope(name);
+        child.setParent(this);
+        this.Children.add(child);
+        return child;
+    }
