@@ -1,0 +1,69 @@
+public void enterVar_def(luluParser.Var_defContext ctx) {
+
+     if(!ctx.getText().contains(",")){ // one variable
+      if(!ctx.var_val(0).ref().getText().contains("[")){ //not Array
+       if(!ctx.getText().contains("=")){//not ammount
+        String type = ctx.type().getText();
+        String name = ctx.var_val(0).ref().getChild(0).getText();
+        symbolTableTree.getCurrentScope().getDataTable().addId(name,type,false,null);
+       }
+       if(ctx.getText().contains("=")) { //ammount
+        String type = ctx.type().getText();
+        String name = ctx.var_val(0).ref().getChild(0).getText();
+        Object value = ctx.var_val().get(0).expr().getText();
+        symbolTableTree.getCurrentScope().getDataTable().addId(name,type,false,value);
+       }
+     }
+      if(ctx.getText().contains("[")){//Array
+
+        String arr_name = ctx.var_val().get(0).ref().getChild(0).getText();
+        String arr_type = ctx.type().getText();
+        String x = ctx.var_val(0).ref().getText();
+        Matcher m = Pattern.compile("\\[(.*?)\\]").matcher(x);
+        ArrayList<Integer> arr_width = new ArrayList<>();
+        boolean validation_dimension = true;
+        while (m.find()) {
+         if (!isInt(m.group(1))) {
+          validation_dimension = false;
+          Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "dimension must be integer");
+          break;
+         }
+         else {
+          arr_width.add(Integer.parseInt(m.group(1)));
+         }
+        }
+
+        if(validation_dimension && arr_width.size()!=0){
+         int c = 0;
+         for (int i = 0; i < ctx.var_val(0).ref().getText().length(); i++) {
+          if (ctx.var_val(0).ref().getText().charAt(i) == '[') {
+           c++;
+          }
+         }
+         symbolTableTree.getCurrentScope().getDataTable().addId(arr_name,arr_type,null,null,false,true,c,arr_width);
+        }
+
+       }
+       }
+     if(ctx.getText().contains(",")){ //chand tayi
+       String type_id = ctx.getChild(0).getText();
+       String str ;
+       for(int i=1;i<ctx.getChildCount();i=i+2){
+        str = ctx.getChild(i).getText();
+        //System.out.println(name);
+        if(str.contains("=")){
+         String[] v = str.split("=");
+         Object value = v[1];
+         String name = v[0];
+         
+         symbolTableTree.getCurrentScope().getDataTable().addId(name , type_id,false ,value);
+        }
+        else {
+         
+         symbolTableTree.getCurrentScope().getDataTable().addId(str,type_id,true,null);
+        }
+      }
+
+      }
+
+     }
