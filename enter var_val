@@ -1,0 +1,150 @@
+public void enterVar_val(luluParser.Var_valContext ctx) {
+        if(ctx.getText().contains("=")){
+            if(!ctx.expr().getText().matches("[0-9]+([*+-/%]|[<>]|[=<>!]=)[0-9]+")) {
+                String op1;
+                String op2;
+                if (ctx.expr().getText().contains("*") ) {
+                    op1 = ctx.expr().getText().split("\\*")[0];
+                    op2 = ctx.expr().getText().split("\\*")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+                }
+                else if(ctx.expr().getText().contains("+") ){
+                    op1 = ctx.expr().getText().split("\\+")[0];
+                    op2 = ctx.expr().getText().split("\\+")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+                }
+                else if(ctx.expr().getText().contains("-")){
+                    op1 = ctx.expr().getText().split("\\-")[0];
+                    op2 = ctx.expr().getText().split("\\-")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+
+                }
+                else if(ctx.expr().getText().contains("/")){
+                    op1 = ctx.expr().getText().split("\\/")[0];
+                    op2 = ctx.expr().getText().split("\\/")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+
+                }
+                else if(ctx.expr().getText().contains("%") ){
+                    op1 = ctx.expr().getText().split("\\%")[0];
+                    op2 = ctx.expr().getText().split("\\%")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+
+                }
+                else if(ctx.expr().getText().contains("<=")){
+                    op1 = ctx.expr().getText().split("[<=]")[0];
+                    op2 = ctx.expr().getText().split("[<=]")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+
+                }
+                else if(ctx.expr().getText().contains(">=") ){
+                    op1 = ctx.expr().getText().split("[>=]")[0];
+                    op2 = ctx.expr().getText().split("[>=]")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+
+                }
+                else if(ctx.expr().getText().contains("<")){
+                    op1 = ctx.expr().getText().split("\\<")[0];
+                    op2 = ctx.expr().getText().split("\\<")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+
+                }
+                else if(ctx.expr().getText().contains(">")){
+                    op1 = ctx.expr().getText().split("\\>")[0];
+                    op2 = ctx.expr().getText().split("\\>")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+
+                }
+                else if(ctx.expr().getText().contains("==") ){
+                    op1 = ctx.expr().getText().split("[==]")[0];
+                    op2 = ctx.expr().getText().split("[==]")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+
+                }
+                else if(ctx.expr().getText().contains("!=")){
+                    op1 = ctx.expr().getText().split("[!]=")[0];
+                    op2 = ctx.expr().getText().split("[!]=")[1];
+                    if(isInt(op1)){
+                        if(!isInt(op2)){
+                            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op2 + " is invalid");
+                        }
+                    }
+                    else{
+                        Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ op1 + " is invalid");
+                    }
+
+                }
+            }
+        }
+
+    }
