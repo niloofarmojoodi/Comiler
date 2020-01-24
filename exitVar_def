@@ -1,0 +1,139 @@
+ public void exitVar_def(luluParser.Var_defContext ctx) {
+        boolean isArr = false;
+        //////////////////////////////////////////////////////
+        if (ctx.getChild(0).getText().equals("const")) {// the variable is const
+            if (!ctx.var_val().get(0).getText().contains("=")) { // if the variable has no amount
+                Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "variable a might not have been initialized");
+            }
+            else {//the variable has amount
+                if (!ctx.getText().contains(",")) {// in line definition variable has one variable
+                    symbolTableTree.setCurrentScope(symbolTableTree.findScope(symbolTableTree.getRoot(), symbolTableTree.getCurrentScope().getName()));
+                    if (ctx.var_val(0).ref().getText().contains("[")) {// is Array
+                        String arr_name = ctx.var_val().get(0).ref().getChild(0).getText();
+                        String arr_type = ctx.type().getText();
+                        Object value = ctx.var_val().get(0).expr().getText();
+                        isArr = true;
+                        String x = ctx.var_val(0).ref().getText();
+                        Matcher m = Pattern.compile("\\[(.*?)\\]").matcher(x); // find '[]'
+                        ArrayList<Integer> arr_width = new ArrayList<>();
+                        while (m.find()) {
+                            // if argument[] not integer
+                            if (!isInt(m.group(1))) {
+                                Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "dimension must be integer");
+                            } else {
+                                //////////age character bod bre meghdaresho az toye symbol id peidakone
+                                arr_width.add(Integer.parseInt(m.group(1)));
+                            }
+                        }
+                        // find dimension
+                        int c = 0;
+                        for (int i = 0; i < ctx.var_val(0).ref().getText().length(); i++) {
+                            if (ctx.var_val(0).ref().getText().charAt(i) == '[') {
+                                c++;
+                            }
+                        }
+                        if(symbolTableTree.getCurrentScope().getName().equals("declare")) {
+                            if(symbolTableTree.getCurrentScope().getDataTable().validation_type(arr_type)== false){// invalitation type
+                                Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type" + arr_type + " is invalid");
+                            }
+                            else{
+                            symbolTableTree.getCurrentScope().getDataTable().addId(arr_name, arr_type, value,Access.PUBLIC, true, isArr, c, arr_width);}
+                            }
+                        else{
+                            if(symbolTableTree.getCurrentScope().getDataTable().validation_type(arr_type)== false){// invalitation type
+                                Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type" +arr_type + " is invalid");
+                            }
+                            else{
+                            symbolTableTree.getCurrentScope().getDataTable().addId(arr_name, arr_type, value,null, true, isArr, c, arr_width);}
+                        }
+                    }
+                    //not Array
+                    else {
+                        String id_name = ctx.var_val(0).ref().getChild(0).getText();
+                        String id_type = ctx.getChild(1).getText();
+                        Object value = ctx.var_val().get(0).expr().getText();
+                        if(symbolTableTree.getCurrentScope().getName().equals("declare")) {
+                            if(symbolTableTree.getCurrentScope().getDataTable().validation_type(id_type)== false){// invalitation type
+                                Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+id_type + " is invalid");
+                            }
+                            else{
+                            symbolTableTree.getCurrentScope().getDataTable().addId(id_name, id_type,Access.PUBLIC, true, value);}
+                        }
+                        else{
+                            if(symbolTableTree.getCurrentScope().getDataTable().validation_type(id_type)== false){// invalitation type
+                                Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+id_type + " is invalid");
+                            }
+                            else{
+                                symbolTableTree.getCurrentScope().getDataTable().addId(id_name, id_type,null, true, value);}
+                        }
+                    }
+                }
+                // in line definition variable have mor variable
+                else {
+                    if (!ctx.var_val(0).ref().getText().contains("[")) {// is not Array
+                        String type_id = ctx.getChild(1).getText();
+                        String name;
+                        for (int i = 2; i < ctx.getChildCount(); i = i + 2) {
+                            name = ctx.getChild(i).getText().split("=")[0];
+                            Object value = ctx.getChild(i).getText().split("=")[1];
+                            if(symbolTableTree.getCurrentScope().getName().equals("declare")) {
+                                if(symbolTableTree.getCurrentScope().getDataTable().validation_type(type_id)== false){// invalitation type
+                                    Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+type_id + " is invalid");
+                                }
+                                else{symbolTableTree.getCurrentScope().getDataTable().addId(name, type_id,Access.PUBLIC, true, value);}
+                            }
+                            else{
+                                if(symbolTableTree.getCurrentScope().getDataTable().validation_type(type_id)== false){
+                                    Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(),"type "+type_id + " is invalid");
+                                }
+                                else{symbolTableTree.getCurrentScope().getDataTable().addId(name, type_id,null, true, value);}
+                            }
+                        }
+                    } else {//is Array
+                        String arr_type = ctx.type().getText();
+                        for (int i = 2; i < ctx.getChildCount(); i = i + 2) {
+                            String arr = ctx.getChild(i).getText().split("=")[0];
+                            String arr_name = arr.split("\\[")[0];
+                            Object value = ctx.getChild(i).getText().split("=")[1];
+                            isArr = true;
+                            Matcher m = Pattern.compile("\\[(.*?)\\]").matcher(arr); // find '[]'
+                            ArrayList<Integer> arr_width = new ArrayList<>();
+                            while (m.find()) {
+                                // if argument[] not integer
+                                if (!isInt(m.group(1))) {
+                                    Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "dimension must be integer");
+                                } else {
+                                    arr_width.add(Integer.parseInt(m.group(1)));
+                                }
+                            }
+                            // find dimension
+                            int c = 0;
+                            for (int j = 0; j < arr.length(); j++) {
+                                if (arr.charAt(j) == '[') {
+                                    c++;
+                                }
+                            }
+                            if(symbolTableTree.getCurrentScope().getName().equals("declare")) {
+                                if (symbolTableTree.getCurrentScope().getDataTable().validation_type(arr_type) == false) {// invalitation type
+                                    Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(),  arr_type + " is invalid");
+                                } else {
+                                    symbolTableTree.getCurrentScope().getDataTable().addId(arr_name, arr_type, value, Access.PUBLIC, true, isArr, c, arr_width);
+                                }
+                            }
+                            else {
+                                if (symbolTableTree.getCurrentScope().getDataTable().validation_type(arr_type) == false) {// invalitation type
+                                    Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ arr_type + " is invalid");
+                                } else {
+                                    symbolTableTree.getCurrentScope().getDataTable().addId(arr_name, arr_type, value, null, true, isArr, c, arr_width);
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+        //////////////////////////////////////////////////////////////////////////
+       // else{// the variable not const
+         
+    }
