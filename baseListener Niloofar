@@ -1,0 +1,980 @@
+package LULU;// Generated from C:/Users/Niloofar Mojoodi/IdeaProjects/final_project_lulu/src\lulu.g4 by ANTLR 4.7.2
+
+
+import org.abego.treelayout.internal.util.java.lang.string.StringUtil;
+import org.antlr.v4.codegen.model.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
+import LULU.Symbol_id;
+import java.util.ArrayList;
+import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+
+public class luluBaseListener implements luluListener {
+
+   public Symbol_table_tree symbolTableTree;
+
+	ArrayList<String> arg_types ;
+//	ArrayList<String> args_var_types;
+	ArrayList<String> return_types ;
+
+
+
+    public boolean isInt(String str) {
+     String regex = "[0-9]+";
+     String s = symbolTableTree.getCurrentScope().getDataTable().find_id_by_name(str);
+     if (str.contains("'") || str.equals("true") || str.equals("false")) {
+      return false;
+     }
+     if ((!s.equals("not found")) && s.equals("int") || str.matches(regex)) {
+      return true;
+     }
+      return false;
+    }
+
+
+    Stack<String> environment = new Stack<>();
+
+
+    @Override
+    public void enterProgram(luluParser.ProgramContext ctx) {
+
+        symbolTableTree = new Symbol_table_tree("Main");
+
+    }
+
+    @Override
+    public void exitProgram(luluParser.ProgramContext ctx) {
+    }
+
+    @Override
+    public void enterFt_dcl(luluParser.Ft_dclContext ctx) {
+
+        symbolTableTree.addToTree(ctx.Declare().getText());
+
+    }
+
+    @Override
+    public void exitFt_dcl(luluParser.Ft_dclContext ctx) {
+     symbolTableTree.exitScope();
+    }
+
+    boolean enter_func_dcl = false;
+
+    @Override
+    public void enterFunc_dcl(luluParser.Func_dclContext ctx) {
+		environment.push(ctx.ID().getText());
+		enter_func_dcl = true;
+		symbolTableTree.setCurrentScope(symbolTableTree.findScope(symbolTableTree.getRoot(), "declare"));
+		symbolTableTree.getCurrentScope().getDataTable().addFunc(environment.peek());
+    }
+
+    @Override
+    public void exitFunc_dcl(luluParser.Func_dclContext ctx) {
+		enter_func_dcl = false;
+
+    }
+
+    int count_args = 0;
+    int count_args_var = 0;
+
+    @Override
+    public void enterArgs(luluParser.ArgsContext ctx) {
+        count_args++;
+    }
+
+    @Override
+
+    public void exitArgs(luluParser.ArgsContext ctx) {
+
+        count_args--;
+        arg_types = new ArrayList<>();
+        return_types = new ArrayList<>();
+        if(count_args ==0){
+
+			String[] rt = ctx.getText().split(",");
+			String[] at = ctx.getText().split(",");
+			for (String r : rt){
+				arg_types.add(r);
+			}
+
+			for (String a : at){
+				return_types.add(a);
+			}
+
+			symbolTableTree.getCurrentScope().getDataTable().add_arg_to_function(environment.peek(),return_types,arg_types);
+        }
+
+    }
+
+    @Override
+    public void enterArgs_var(luluParser.Args_varContext ctx) {
+     count_args_var++;
+
+    }
+
+    @Override
+    public void exitArgs_var(luluParser.Args_varContext ctx) {
+//     count_args_var--;
+//     args_var_types = new ArrayList<>();
+//
+//     if(count_args_var==0 && (ctx.getParent().getChildCount()==4 || ctx.getParent().getChildCount()==5) ){
+//      String[] at = ctx.getText().split(",");
+//      System.out.println(at.length);
+//      System.out.println();
+//
+//
+////      for (String a : at){
+////       args_var_types.add(a);
+////      }
+//      //System.out.println(args_var_types);
+//     }
+//    }
+    }
+
+    @Override
+    public void enterType_dcl(luluParser.Type_dclContext ctx) {
+    	String type_name = ctx.ID().getText();
+		symbolTableTree.getCurrentScope().getDataTable().addClass(type_name,null);
+    }
+
+    @Override
+    public void exitType_dcl(luluParser.Type_dclContext ctx) {
+
+
+    }
+
+    @Override
+    public void enterVar_def(luluParser.Var_defContext ctx) {
+
+     if(!ctx.getText().contains(",")){ // one variable
+      if(!ctx.var_val(0).ref().getText().contains("[")){ //not Array
+       if(!ctx.getText().contains("=")){//not ammount
+        String type = ctx.type().getText();
+        String name = ctx.var_val(0).ref().getChild(0).getText();
+        symbolTableTree.getCurrentScope().getDataTable().addId(name,type,null,true,null);
+       }
+       if(ctx.getText().contains("=")) { //ammount
+        String type = ctx.type().getText();
+        String name = ctx.var_val(0).ref().getChild(0).getText();
+        Object value = ctx.var_val().get(0).expr().getText();
+        symbolTableTree.getCurrentScope().getDataTable().addId(name,type,null,true,value);
+       }
+     }
+      if(ctx.getText().contains("[")){//Array
+
+        String arr_name = ctx.var_val().get(0).ref().getChild(0).getText();
+        String arr_type = ctx.type().getText();
+        String x = ctx.var_val(0).ref().getText();
+        Matcher m = Pattern.compile("\\[(.*?)\\]").matcher(x);
+        ArrayList<Integer> arr_width = new ArrayList<>();
+        boolean validation_dimension = true;
+        while (m.find()) {
+         if (!isInt(m.group(1))) {
+          validation_dimension = false;
+          Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "dimension must be integer");
+          break;
+         }
+         else {
+          arr_width.add(Integer.parseInt(m.group(1)));
+         }
+        }
+
+        if(validation_dimension && arr_width.size()!=0){
+         int c = 0;
+         for (int i = 0; i < ctx.var_val(0).ref().getText().length(); i++) {
+          if (ctx.var_val(0).ref().getText().charAt(i) == '[') {
+           c++;
+          }
+         }
+         symbolTableTree.getCurrentScope().getDataTable().addId(arr_name,arr_type,null,null,false,true,c,arr_width);
+        }
+
+       }
+       }
+     if(ctx.getText().contains(",")){ //chand tayi
+       String type_id = ctx.getChild(0).getText();
+       String str ;
+       for(int i=1;i<ctx.getChildCount();i=i+2){
+        str = ctx.getChild(i).getText();
+        //System.out.println(name);
+        if(str.contains("=")){
+         String[] v = str.split("=");
+         Object value = v[1];
+         String name = v[0];
+
+         symbolTableTree.getCurrentScope().getDataTable().addId(name ,type_id, null,false ,value);
+        }
+        else {
+
+         symbolTableTree.getCurrentScope().getDataTable().addId(str,type_id,null,true,null);
+        }
+      }
+
+      }
+
+     }
+
+    @Override
+    public void exitVar_def(luluParser.Var_defContext ctx) {
+     boolean isArr = false;
+     //////////////////////////////////////////////////////
+     if (ctx.getChild(0).getText().equals("const")) {// the variable is const
+      if (!ctx.var_val().get(0).getText().contains("=")) { // if the variable has no amount
+       Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "variable a might not have been initialized");
+      }
+      else {//the variable has amount
+       if (!ctx.getText().contains(",")) {// in line definition variable has one variable
+        symbolTableTree.setCurrentScope(symbolTableTree.findScope(symbolTableTree.getRoot(), symbolTableTree.getCurrentScope().getName()));
+        if (ctx.var_val(0).ref().getText().contains("[")) {// is Array
+         String arr_name = ctx.var_val().get(0).ref().getChild(0).getText();
+         String arr_type = ctx.type().getText();
+         Object value = ctx.var_val().get(0).expr().getText();
+         isArr = true;
+         String x = ctx.var_val(0).ref().getText();
+         Matcher m = Pattern.compile("\\[(.*?)\\]").matcher(x); // find '[]'
+         ArrayList<Integer> arr_width = new ArrayList<>();
+         while (m.find()) {
+          // if argument[] not integer
+          if (!isInt(m.group(1))) {
+           Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "dimension must be integer");
+          } else {
+           //////////age character bod bre meghdaresho az toye symbol id peidakone
+           arr_width.add(Integer.parseInt(m.group(1)));
+          }
+         }
+         // find dimension
+         int c = 0;
+         for (int i = 0; i < ctx.var_val(0).ref().getText().length(); i++) {
+          if (ctx.var_val(0).ref().getText().charAt(i) == '[') {
+           c++;
+          }
+         }
+         if(symbolTableTree.getCurrentScope().getName().equals("declare")) {
+          if(symbolTableTree.getCurrentScope().getDataTable().validation_type(arr_type)== false){// invalitation type
+           Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type" + arr_type + " is invalid");
+          }
+          else{
+           symbolTableTree.getCurrentScope().getDataTable().addId(arr_name, arr_type, value,Access.PUBLIC, true, isArr, c, arr_width);}
+         }
+         else{
+          if(symbolTableTree.getCurrentScope().getDataTable().validation_type(arr_type)== false){// invalitation type
+           Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type" +arr_type + " is invalid");
+          }
+          else{
+           symbolTableTree.getCurrentScope().getDataTable().addId(arr_name, arr_type, value,null, true, isArr, c, arr_width);}
+         }
+        }
+        //not Array
+        else {
+         String id_name = ctx.var_val(0).ref().getChild(0).getText();
+         String id_type = ctx.getChild(1).getText();
+         Object value = ctx.var_val().get(0).expr().getText();
+         if(symbolTableTree.getCurrentScope().getName().equals("declare")) {
+          if(symbolTableTree.getCurrentScope().getDataTable().validation_type(id_type)== false){// invalitation type
+           Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+id_type + " is invalid");
+          }
+          else{
+           //symbolTableTree.getCurrentScope().getDataTable().addId(id_name, id_type,Access.PUBLIC, true, value);
+           symbolTableTree.getCurrentScope().getDataTable().addId(id_name,id_type,Access.PUBLIC,true,value);
+            }
+
+         }
+         else{
+          if(symbolTableTree.getCurrentScope().getDataTable().validation_type(id_type)== false){// invalitation type
+           Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+id_type + " is invalid");
+          }
+          else{
+           symbolTableTree.getCurrentScope().getDataTable().addId(id_name, id_type,null, true, value);}
+         }
+        }
+       }
+       // in line definition variable have mor variable
+       else {
+        if (!ctx.var_val(0).ref().getText().contains("[")) {// is not Array
+         String type_id = ctx.getChild(1).getText();
+         String name;
+         for (int i = 2; i < ctx.getChildCount(); i = i + 2) {
+          name = ctx.getChild(i).getText().split("=")[0];
+          Object value = ctx.getChild(i).getText().split("=")[1];
+          if(symbolTableTree.getCurrentScope().getName().equals("declare")) {
+           if(symbolTableTree.getCurrentScope().getDataTable().validation_type(type_id)== false){// invalitation type
+            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+type_id + " is invalid");
+           }
+           else{symbolTableTree.getCurrentScope().getDataTable().addId(name, type_id,Access.PUBLIC, true, value);}
+          }
+          else{
+           if(symbolTableTree.getCurrentScope().getDataTable().validation_type(type_id)== false){
+            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(),"type "+type_id + " is invalid");
+           }
+           else{symbolTableTree.getCurrentScope().getDataTable().addId(name, type_id,null, true, value);}
+          }
+         }
+        } else {//is Array
+         String arr_type = ctx.type().getText();
+         for (int i = 2; i < ctx.getChildCount(); i = i + 2) {
+          String arr = ctx.getChild(i).getText().split("=")[0];
+          String arr_name = arr.split("\\[")[0];
+          Object value = ctx.getChild(i).getText().split("=")[1];
+          isArr = true;
+          Matcher m = Pattern.compile("\\[(.*?)\\]").matcher(arr); // find '[]'
+          ArrayList<Integer> arr_width = new ArrayList<>();
+          while (m.find()) {
+           // if argument[] not integer
+           if (!isInt(m.group(1))) {
+            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "dimension must be integer");
+           } else {
+            arr_width.add(Integer.parseInt(m.group(1)));
+           }
+          }
+          // find dimension
+          int c = 0;
+          for (int j = 0; j < arr.length(); j++) {
+           if (arr.charAt(j) == '[') {
+            c++;
+           }
+          }
+          if(symbolTableTree.getCurrentScope().getName().equals("declare")) {
+           if (symbolTableTree.getCurrentScope().getDataTable().validation_type(arr_type) == false) {// invalitation type
+            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(),  arr_type + " is invalid");
+           } else {
+            symbolTableTree.getCurrentScope().getDataTable().addId(arr_name, arr_type, value, Access.PUBLIC, true, isArr, c, arr_width);
+           }
+          }
+          else {
+           if (symbolTableTree.getCurrentScope().getDataTable().validation_type(arr_type) == false) {// invalitation type
+            Error e = new Error(ctx.start.getLine(), ctx.start.getCharPositionInLine(), "type "+ arr_type + " is invalid");
+           } else {
+            symbolTableTree.getCurrentScope().getDataTable().addId(arr_name, arr_type, value, null, true, isArr, c, arr_width);
+           }
+          }
+         }
+        }
+       }
+
+      }
+     }
+
+
+    }
+
+
+    @Override
+    public void enterVar_val(luluParser.Var_valContext ctx) {
+    }
+
+    @Override
+    public void exitVar_val(luluParser.Var_valContext ctx) {
+    }
+
+    @Override
+    public void enterFt_def(luluParser.Ft_defContext ctx) {
+    // System.out.println(ctx.getChild(0).getChild(1).getText());
+     if(ctx.getChild(0).getChild(0).getText().equals("type")){
+      symbolTableTree.addToTree(ctx.getChild(0).getChild(1).getText());
+     }
+     else {
+      symbolTableTree.addToTree(ctx.fun_def().ID().getText());
+     }
+
+    }
+
+    @Override
+    public void exitFt_def(luluParser.Ft_defContext ctx) {
+     symbolTableTree.exitScope();
+
+    }
+
+    @Override
+    public void enterType_def(luluParser.Type_defContext ctx) {
+
+    }
+
+    @Override
+    public void exitType_def(luluParser.Type_defContext ctx) {
+    }
+
+    @Override
+    public void enterComponent(luluParser.ComponentContext ctx) {
+    }
+
+    @Override
+    public void exitComponent(luluParser.ComponentContext ctx) {
+    }
+
+    @Override
+    public void enterAccess_modifier(luluParser.Access_modifierContext ctx) {
+    }
+
+    @Override
+    public void exitAccess_modifier(luluParser.Access_modifierContext ctx) {
+    }
+
+    @Override
+    public void enterFun_def(luluParser.Fun_defContext ctx) {
+    }
+
+    @Override
+    public void exitFun_def(luluParser.Fun_defContext ctx) {
+
+    }
+    @Override
+    public void enterBlock(luluParser.BlockContext ctx) {
+    }
+
+    @Override
+    public void exitBlock(luluParser.BlockContext ctx) {
+    }
+
+    @Override
+    public void enterAssignment(luluParser.AssignmentContext ctx) {
+    }
+
+    @Override
+    public void exitAssignment(luluParser.AssignmentContext ctx) {
+    }
+
+    @Override
+    public void enterFunction_call(luluParser.Function_callContext ctx) {
+    }
+
+    @Override
+    public void exitFunction_call(luluParser.Function_callContext ctx) {
+    }
+
+    @Override
+    public void enterConditional_statement(luluParser.Conditional_statementContext ctx) {
+    }
+
+    @Override
+    public void exitConditional_statement(luluParser.Conditional_statementContext ctx) {
+    }
+
+    @Override
+    public void enterLoop_statement(luluParser.Loop_statementContext ctx) {
+    }
+
+    @Override
+    public void exitLoop_statement(luluParser.Loop_statementContext ctx) {
+    }
+
+    @Override
+    public void enterBreak(luluParser.BreakContext ctx) {
+    }
+
+    @Override
+    public void exitBreak(luluParser.BreakContext ctx) {
+    }
+
+    @Override
+    public void enterContinue(luluParser.ContinueContext ctx) {
+    }
+
+    @Override
+    public void exitContinue(luluParser.ContinueContext ctx) {
+    }
+
+    @Override
+    public void enterDestruction(luluParser.DestructionContext ctx) {
+    }
+
+    @Override
+    public void exitDestruction(luluParser.DestructionContext ctx) {
+    }
+
+    @Override
+    public void enterAssign(luluParser.AssignContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitAssign(luluParser.AssignContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterVar(luluParser.VarContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitVar(luluParser.VarContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterReef(luluParser.ReefContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitReef(luluParser.ReefContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterVarLabel(luluParser.VarLabelContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitVarLabel(luluParser.VarLabelContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterOpBitwise(luluParser.OpBitwiseContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitOpBitwise(luluParser.OpBitwiseContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterListLabel(luluParser.ListLabelContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitListLabel(luluParser.ListLabelContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterOpLogical(luluParser.OpLogicalContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitOpLogical(luluParser.OpLogicalContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterHandleCall(luluParser.HandleCallContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitHandleCall(luluParser.HandleCallContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterUnaryOp(luluParser.UnaryOpContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitUnaryOp(luluParser.UnaryOpContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterParanthese(luluParser.ParantheseContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitParanthese(luluParser.ParantheseContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterOpFour(luluParser.OpFourContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitOpFour(luluParser.OpFourContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterNilLabel(luluParser.NilLabelContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitNilLabel(luluParser.NilLabelContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterOpOne(luluParser.OpOneContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitOpOne(luluParser.OpOneContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterArrayVal(luluParser.ArrayValContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitArrayVal(luluParser.ArrayValContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterFuncCall(luluParser.FuncCallContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitFuncCall(luluParser.FuncCallContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterOpTwo(luluParser.OpTwoContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitOpTwo(luluParser.OpTwoContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterOpThree(luluParser.OpThreeContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitOpThree(luluParser.OpThreeContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterFunc_call(luluParser.Func_callContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitFunc_call(luluParser.Func_callContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterList(luluParser.ListContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitList(luluParser.ListContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterHandle_call(luluParser.Handle_callContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitHandle_call(luluParser.Handle_callContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterParams(luluParser.ParamsContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitParams(luluParser.ParamsContext ctx) {
+    }
+
+    @Override
+    public void enterCond_stmt(luluParser.Cond_stmtContext ctx) {
+    }
+
+
+    @Override
+    public void exitCond_stmt(luluParser.Cond_stmtContext ctx) {
+    }
+
+
+    @Override
+    public void enterSwitch_body(luluParser.Switch_bodyContext ctx) {
+    }
+
+    @Override
+    public void exitSwitch_body(luluParser.Switch_bodyContext ctx) {
+    }
+
+    @Override
+    public void enterLoop_stmt(luluParser.Loop_stmtContext ctx) {
+    }
+
+    @Override
+    public void exitLoop_stmt(luluParser.Loop_stmtContext ctx) {
+    }
+
+    @Override
+    public void enterType(luluParser.TypeContext ctx) {
+    }
+
+    @Override
+    public void exitType(luluParser.TypeContext ctx) {
+    }
+
+    @Override
+    public void enterConst_val(luluParser.Const_valContext ctx) {
+    }
+
+    @Override
+    public void exitConst_val(luluParser.Const_valContext ctx) {
+    }
+
+
+    @Override
+    public void enterUnary_op(luluParser.Unary_opContext ctx) {
+    }
+
+    @Override
+    public void exitUnary_op(luluParser.Unary_opContext ctx) {
+    }
+
+    @Override
+    public void enterOp1(luluParser.Op1Context ctx) {
+    }
+
+    @Override
+    public void exitOp1(luluParser.Op1Context ctx) {
+    }
+
+    @Override
+    public void enterOp2(luluParser.Op2Context ctx) {
+    }
+
+
+    @Override
+    public void exitOp2(luluParser.Op2Context ctx) {
+    }
+
+    @Override
+    public void enterOp3(luluParser.Op3Context ctx) {
+    }
+
+    @Override
+    public void exitOp3(luluParser.Op3Context ctx) {
+    }
+
+    @Override
+    public void enterOp4(luluParser.Op4Context ctx) {
+    }
+
+    @Override
+    public void exitOp4(luluParser.Op4Context ctx) {
+    }
+
+    @Override
+    public void enterBitwise(luluParser.BitwiseContext ctx) {
+    }
+
+
+    @Override
+    public void exitBitwise(luluParser.BitwiseContext ctx) {
+    }
+
+    @Override
+    public void enterLogical(luluParser.LogicalContext ctx) {
+    }
+
+    @Override
+    public void exitLogical(luluParser.LogicalContext ctx) {
+    }
+
+    @Override
+    public void enterEveryRule(ParserRuleContext ctx) {
+    }
+
+
+    @Override
+    public void exitEveryRule(ParserRuleContext ctx) {
+    }
+
+
+    @Override
+    public void visitTerminal(TerminalNode node) {
+    }
+
+    @Override
+    public void visitErrorNode(ErrorNode node) {
+    }
+}
