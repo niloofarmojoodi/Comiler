@@ -1,0 +1,8 @@
+public String find_id_by_name(String name){
+        for (int i=0;i<s_id.size();i++){
+            if(s_id.get(i).getName().equals(name)){
+                return s_id.get(i).getType();
+            }
+        }
+        return "not found";
+    }
