@@ -1,0 +1,4 @@
+public void addToTree(String name)
+    {
+       currentScope = currentScope.addChildren(name);
+    }
