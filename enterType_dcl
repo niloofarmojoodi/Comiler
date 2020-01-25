@@ -1,0 +1,11 @@
+public void enterType_dcl(luluParser.Type_dclContext ctx) {
+        String type_name = ctx.ID().getText();
+        if(symbolTableTree.getCurrentScope().getDataTable().find_user_type_by_name(type_name) == null &&symbolTableTree.getCurrentScope().getDataTable().find_id_by_name(type_name) == null ){
+            symbolTableTree.getCurrentScope().getDataTable().addClass(type_name,null);
+        }
+
+        else{
+            Error e = new Error(ctx.start.getLine(),ctx.start.getCharPositionInLine(),"name of user_type must be uniqe ");
+        }
+
+    }
